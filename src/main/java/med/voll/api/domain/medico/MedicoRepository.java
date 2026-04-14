@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import med.voll.api.domain.usuario.Usuario;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 
 
@@ -32,11 +33,21 @@ public interface MedicoRepository extends JpaRepository<Medico, Long> {
      */
     @Query(value = """
         SELECT m.* FROM medicos m
-        LEFT JOIN consultas c ON c.medico_id = m.id AND c.data_hora = :dataHora AND c.ativo = true
+        INNER JOIN disponibilidade_medico d ON d.medico_id = m.id
+            AND d.dia_semana = :diaSemana
+            AND d.hora_inicio <= :hora
+            AND d.hora_fim > :hora
+            AND d.ativo = true
+        LEFT JOIN consultas c ON c.medico_id = m.id
+            AND c.data_hora = :dataHora
+            AND c.ativo = true
         WHERE m.ativo = true
         AND c.id IS NULL
-        ORDER BY RAND() -- ALTERADO DE random() PARA RAND()
+        ORDER BY RAND()
         LIMIT 1
     """, nativeQuery = true)
-    Optional<Medico> escolherMedicoAleatorioLivreNaData(@Param("dataHora") LocalDateTime dataHora);
+    Optional<Medico> escolherMedicoAleatorioLivreNaData(
+            @Param("dataHora") LocalDateTime dataHora,
+            @Param("diaSemana") String diaSemana,
+            @Param("hora") LocalTime hora);
 }

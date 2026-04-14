@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import med.voll.api.domain.paciente.*;
 import med.voll.api.service.PacienteService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -37,7 +38,7 @@ public class PacientesController {
     @PreAuthorize("hasRole('ROLE_FUNCIONARIO')")
     @Operation(summary = "Listar pacientes", description = "Lista pacientes ativos com paginação")
     public ResponseEntity<Page<DadosListagemPaciente>> listar(
-            @PageableDefault(size = 10) Pageable paginacao) {
+            @ParameterObject @PageableDefault(size = 10) Pageable paginacao) {
         var page = pacienteService.listarAtivos(paginacao);
         return  ResponseEntity.ok(page);
     }

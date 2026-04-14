@@ -20,7 +20,7 @@ public class AdminInitializer implements ApplicationRunner {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${admin.login:admin@vollmed.com}")
+    @Value("${admin.login}")
     private String adminLogin;
 
     @Value("${admin.password:}")
@@ -34,13 +34,15 @@ public class AdminInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        log.info("AdminInitializer: verificando admin. Login configurado: {}", adminLogin);
+
         if (usuarioRepository.existsByRole(Perfil.ROLE_ADMIN)) {
+            log.info("AdminInitializer: admin já existe no banco, nenhuma ação necessária.");
             return;
         }
 
         if (adminPassword == null || adminPassword.isBlank()) {
-            log.warn("Nenhum admin encontrado no banco. " +
-                    "Defina ADMIN_LOGIN e ADMIN_PASSWORD para criar o admin inicial.");
+            log.warn("AdminInitializer: ADMIN_PASSWORD não configurado. Admin não será criado.");
             return;
         }
 

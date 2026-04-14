@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import med.voll.api.domain.consulta.*;
 import med.voll.api.domain.usuario.Usuario;
 import med.voll.api.service.ConsultaService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -37,7 +38,7 @@ public class ConsultaController {
     @GetMapping
     @Operation(summary = "Listar consultas", description = "Lista consultas ativas com paginação")
     public ResponseEntity<Page<DadosListagemConsulta>> listar(
-            @PageableDefault(size = 10, sort = {"dataHora"}) Pageable paginacao,
+            @ParameterObject @PageableDefault(size = 10, sort = {"dataHora"}) Pageable paginacao,
             @AuthenticationPrincipal Usuario usuario
     ) {
         var page = consultaService.listarAtivas(paginacao, usuario);

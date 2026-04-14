@@ -1,6 +1,7 @@
 package med.voll.api.domain.consulta;
 
 import med.voll.api.exception.ValidacaoException;
+import med.voll.api.domain.medico.DisponibilidadeMedicoRepository;
 import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.PacienteRepository;
@@ -16,13 +17,16 @@ public class AgendaDeConsultas {
     private final ConsultaRepository consultaRepository;
     private final MedicoRepository medicoRepository;
     private final PacienteRepository pacienteRepository;
+    private final DisponibilidadeMedicoRepository disponibilidadeRepository;
 
     public AgendaDeConsultas(ConsultaRepository consultaRepository,
                              MedicoRepository medicoRepository,
-                             PacienteRepository pacienteRepository) {
+                             PacienteRepository pacienteRepository,
+                             DisponibilidadeMedicoRepository disponibilidadeRepository) {
         this.consultaRepository = consultaRepository;
         this.medicoRepository = medicoRepository;
         this.pacienteRepository = pacienteRepository;
+        this.disponibilidadeRepository = disponibilidadeRepository;
     }
 
     public DadosDetalhamentoConsulta agendar(DadosAgendamentoConsulta dados) {
@@ -54,6 +58,7 @@ public class AgendaDeConsultas {
         if (medico == null) {
             medico = escolherMedicoAleatorio(dados);
         } else {
+            validarDisponibilidadeMedico(medico.getId(), dados.data());
             validarMedicoOcupado(medico.getId(), dados.data());
         }
 
@@ -133,11 +138,22 @@ public class AgendaDeConsultas {
         }
     }
 
-    private Medico escolherMedicoAleatorio(DadosAgendamentoConsulta dados) {
-        // Se o médico não foi fornecido no DTO, buscamos um aleatório disponível.
-        Optional<Medico> medicoOptional = medicoRepository.escolherMedicoAleatorioLivreNaData(dados.data());
+    private void validarDisponibilidadeMedico(long medicoId, LocalDateTime dataHora) {
+        var diaSemana = dataHora.getDayOfWeek();
+        var hora = dataHora.toLocalTime();
+        boolean temDisponibilidade = disponibilidadeRepository
+                .existsByMedicoIdAndDiaSemanaAndHoraInicioLessThanEqualAndHoraFimGreaterThanAndAtivoTrue(
+                        medicoId, diaSemana, hora, hora);
+        if (!temDisponibilidade) {
+            throw new ValidacaoException("Médico não possui disponibilidade cadastrada no dia/horário solicitado.");
+        }
+    }
 
-        // Retorna o médico se ele existir, ou 'null' se Optional estiver vazio
+    private Medico escolherMedicoAleatorio(DadosAgendamentoConsulta dados) {
+        var diaSemana = dados.data().getDayOfWeek().name();
+        var hora = dados.data().toLocalTime();
+        Optional<Medico> medicoOptional = medicoRepository.escolherMedicoAleatorioLivreNaData(
+                dados.data(), diaSemana, hora);
         return medicoOptional.orElse(null);
     }
 

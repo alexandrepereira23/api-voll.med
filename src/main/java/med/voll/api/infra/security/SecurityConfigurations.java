@@ -1,6 +1,7 @@
 package med.voll.api.infra.security;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -54,8 +55,8 @@ public class SecurityConfigurations {
                     }
                     auth.anyRequest().authenticated();
                 })
-                .addFilterBefore(rateLimitFilter, SecurityFillter.class)
-                .addFilterBefore(securityFillter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(securityFillter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
 
@@ -69,5 +70,19 @@ public class SecurityConfigurations {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public FilterRegistrationBean<SecurityFillter> securityFillterRegistration(SecurityFillter securityFillter) {
+        FilterRegistrationBean<SecurityFillter> registration = new FilterRegistrationBean<>(securityFillter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter rateLimitFilter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(rateLimitFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 }

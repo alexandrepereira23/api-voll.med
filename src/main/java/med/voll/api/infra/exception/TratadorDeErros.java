@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import med.voll.api.exception.ValidacaoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -58,6 +59,12 @@ public class TratadorDeErros {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> tratarErroAcessoNegado() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acesso negado");
+    }
+
+    @ExceptionHandler(InvalidDataAccessApiUsageException.class)
+    public ResponseEntity<DadosErroValidacao> tratarErroDadosInvalidos(InvalidDataAccessApiUsageException ex) {
+        return ResponseEntity.badRequest()
+                .body(new DadosErroValidacao("sort", "Parâmetro de ordenação inválido. Use o formato: campo,asc ou campo,desc"));
     }
 
     @ExceptionHandler(Exception.class)

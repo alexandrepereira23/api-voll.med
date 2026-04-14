@@ -34,7 +34,6 @@ public class Medico {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-
     public Medico(DadosCadastroMedico dados) {
         this.ativo = true;
         this.nome = dados.nome();

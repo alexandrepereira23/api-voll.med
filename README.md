@@ -8,7 +8,7 @@ API REST para gerenciamento de uma clínica médica fictícia chamada **Voll.med
 
 | Tecnologia | Versão | Descrição |
 |---|---|---|
-| Java | 21 | Linguagem principal |
+| Java | 17 | Linguagem principal |
 | Spring Boot | 3.5.4 | Framework base |
 | Spring Web | — | Criação da API REST |
 | Spring Data JPA | — | Camada de persistência |
@@ -33,8 +33,9 @@ src/
     │   ├── domain/                  # Entidades e regras de negócio
     │   │   ├── consulta/
     │   │   ├── endereco/
-    │   │   ├── medico/
+    │   │   ├── medico/              # inclui DisponibilidadeMedico
     │   │   ├── paciente/
+    │   │   ├── prontuario/
     │   │   └── usuario/
     │   ├── exception/               # Exceções de domínio
     │   ├── infra/
@@ -43,14 +44,14 @@ src/
     │   └── service/                 # Camada de serviços
     └── resources/
         ├── application.properties
-        └── db/migration/            # Scripts Flyway (V1 a V8)
+        └── db/migration/            # Scripts Flyway (V1 a V13)
 ```
 
 ---
 
 ## Pré-requisitos
 
-- **Java 21** ou superior
+- **Java 17** ou superior
 - **Maven 3.9+**
 - **Docker** e **Docker Compose**
 
@@ -230,11 +231,11 @@ Authorization: Bearer <token>
 
 ### Consultas
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| `POST` | `/consultas` | Agenda uma nova consulta |
-| `GET` | `/consultas` | Lista consultas ativas (paginado) |
-| `DELETE` | `/consultas` | Cancela uma consulta |
+| Método | Endpoint | Acesso | Descrição |
+|--------|----------|--------|-----------|
+| `POST` | `/consultas` | `ROLE_FUNCIONARIO` | Agenda uma nova consulta |
+| `GET` | `/consultas` | Autenticado | Lista consultas ativas (paginado) |
+| `DELETE` | `/consultas` | `ROLE_FUNCIONARIO` | Cancela uma consulta |
 
 **Agendamento:**
 ```json
@@ -245,6 +246,8 @@ Authorization: Bearer <token>
 }
 ```
 
+> `idMedico` é opcional — se omitido, o sistema escolhe automaticamente um médico com disponibilidade cadastrada no horário.
+
 **Cancelamento:**
 ```json
 {
@@ -253,7 +256,57 @@ Authorization: Bearer <token>
 }
 ```
 
+> Motivos aceitos: `PACIENTE_DESISTIU`, `MEDICO_CANCELOU`, `OUTROS`.
 > `ROLE_MEDICO` vê apenas as consultas vinculadas ao seu próprio cadastro.
+
+---
+
+### Disponibilidade de Médicos
+
+| Método | Endpoint | Acesso | Descrição |
+|--------|----------|--------|-----------|
+| `POST` | `/medicos/{id}/disponibilidade` | `ROLE_FUNCIONARIO` | Cadastra um horário de disponibilidade |
+| `GET` | `/medicos/{id}/disponibilidade` | Autenticado | Lista horários do médico |
+| `DELETE` | `/medicos/{id}/disponibilidade/{dispId}` | `ROLE_FUNCIONARIO` | Remove um horário |
+
+**Cadastro de disponibilidade:**
+```json
+{
+  "diaSemana": "MONDAY",
+  "horaInicio": "08:00:00",
+  "horaFim": "17:00:00"
+}
+```
+
+> Valores aceitos para `diaSemana`: `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY`.
+> O agendamento de consultas valida se o médico possui disponibilidade no dia e horário solicitados.
+
+---
+
+### Prontuários
+
+| Método | Endpoint | Acesso | Descrição |
+|--------|----------|--------|-----------|
+| `POST` | `/prontuarios` | `ROLE_MEDICO` | Cria prontuário vinculado a uma consulta |
+| `GET` | `/prontuarios` | Autenticado | Lista prontuários ativos (paginado) |
+| `GET` | `/prontuarios/{id}` | Autenticado | Detalha um prontuário |
+| `GET` | `/prontuarios/paciente/{id}` | Autenticado | Histórico clínico do paciente |
+| `PUT` | `/prontuarios` | `ROLE_MEDICO` | Atualiza prontuário (janela de 24h) |
+| `DELETE` | `/prontuarios/{id}` | `ROLE_ADMIN` | Inativa um prontuário |
+
+**Criação de prontuário:**
+```json
+{
+  "consultaId": 1,
+  "anamnese": "Paciente relata dor de cabeça há 3 dias...",
+  "diagnostico": "Enxaqueca tensional",
+  "cid10": "G43",
+  "observacoes": "Repouso e hidratação recomendados"
+}
+```
+
+> `ROLE_MEDICO` acessa apenas prontuários de consultas que realizou.
+> Prontuário não pode ser editado após 24h do registro.
 
 ---
 
@@ -269,6 +322,11 @@ Authorization: Bearer <token>
 | `V6` | Criação da tabela `consultas` |
 | `V7` | Criação da tabela `usuarios` |
 | `V8` | Constraint `UNIQUE` na coluna `login` de usuários |
+| `V9` | Correção do tipo da coluna `ativo` em consultas (`TINYINT`) |
+| `V10` | Conversão da coluna `uf` de `CHAR(2)` para `VARCHAR(2)` em médicos e pacientes |
+| `V11` | Adição da coluna `usuario_id` (FK) em médicos |
+| `V12` | Criação da tabela `prontuarios` |
+| `V13` | Criação da tabela `disponibilidade_medico` |
 
 ---
 

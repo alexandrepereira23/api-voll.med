@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import med.voll.api.domain.medico.*;
 import med.voll.api.domain.usuario.Usuario;
 import med.voll.api.service.MedicoService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -39,7 +40,7 @@ public class MedicoController {
     @GetMapping
     @Operation(summary = "Listar médicos", description = "Lista médicos ativos com paginação")
     public ResponseEntity<Page<DadosListagemMedico>> listar(
-            @PageableDefault(size = 10) Pageable paginacao,
+            @ParameterObject @PageableDefault(size = 10) Pageable paginacao,
             @AuthenticationPrincipal Usuario usuario) {
         var page = medicoService.listar(paginacao, usuario);
         return ResponseEntity.ok(page);
