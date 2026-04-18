@@ -38,6 +38,7 @@ public class IaService {
     private final RestClient restClient;
     private final ProntuarioRepository prontuarioRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public IaService(@Value("${anthropic.api.key}") String apiKey,
                      ProntuarioRepository prontuarioRepository) {
         this.prontuarioRepository = prontuarioRepository;
@@ -46,6 +47,12 @@ public class IaService {
                 .defaultHeader("x-api-key", apiKey)
                 .defaultHeader("anthropic-version", "2023-06-01")
                 .build();
+    }
+
+    // Construtor para testes — permite injetar RestClient mockado
+    IaService(RestClient restClient, ProntuarioRepository prontuarioRepository) {
+        this.restClient = restClient;
+        this.prontuarioRepository = prontuarioRepository;
     }
 
     public DadosRespostaIa gerarPreDiagnostico(Long consultaId, String sintomas) {

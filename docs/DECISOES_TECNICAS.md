@@ -111,6 +111,64 @@ A integração com a Anthropic API usa o `RestClient` nativo do Spring 6 chamand
 
 ---
 
+### Testes de controller com `@WebMvcTest` + `.with(user(usuario))`
+
+Os testes de controller usam `@WebMvcTest` (carrega apenas a camada web) com `SecurityMockMvcRequestPostProcessors.user(new Usuario(...))` para autenticar com um `Usuario` real (não o `User` padrão do Spring Security).
+
+**Por quê:** `@WithMockUser` cria um objeto `User` do Spring Security que não é assignável a `Usuario` customizado — os parâmetros `@AuthenticationPrincipal Usuario usuario` receberiam `null` e causariam `NullPointerException` nos services mockados.
+
+**Como aplicar:** em qualquer teste de controller que use `@AuthenticationPrincipal Usuario`, passar `.with(user(new Usuario(id, login, senha, Perfil.ROLE_XXX, null)))` em vez de `@WithMockUser`.
+
+---
+
+### `IaService` com construtor package-private para testes
+
+`IaService` constrói o `RestClient` internamente no construtor Spring. Para testes unitários, foi adicionado um segundo construtor `package-private` que aceita um `RestClient` pré-construído, sem impactar o comportamento de produção.
+
+**Por quê:** sem esse construtor, testar `IaService` sem contexto Spring seria impossível, pois `RestClient.builder()` não é injetável. Esta é a abordagem padrão para habilitar unit testing de classes que constroem dependências internamente.
+
+**Como aplicar:** usar apenas no mesmo pacote ou em testes — nunca chamar de código de produção.
+
+---
+
+### Estratégia de testes: sem H2 + Flyway, `create-drop` para `@SpringBootTest`
+
+`src/test/resources/application.properties` configura H2 com `spring.flyway.enabled=false` e `spring.jpa.hibernate.ddl-auto=create-drop`. Flyway é desabilitado nos testes para evitar incompatibilidades de sintaxe MySQL com H2.
+
+**Por quê:** algumas migrations usam `MODIFY COLUMN` e sintaxe específica de MySQL que pode ser instável no H2 mesmo em `MODE=MySQL`. O `create-drop` do Hibernate cria o schema diretamente das entidades JPA, que é mais confiável para testes.
+
+**Como aplicar:** testes unitários e `@WebMvcTest` não são afetados (sem JPA). `@SpringBootTest` usa H2 automaticamente pela precedência de `src/test/resources`.
+
+---
+
+### `@WebMvcTest` exige `@MockBean(JpaMetamodelMappingContext.class)` com `@EnableJpaAuditing`
+
+`@EnableJpaAuditing` em `ApiApplication` exige um contexto JPA com metamodel. O slice `@WebMvcTest` não carrega JPA, causando `IllegalArgumentException: JPA metamodel must not be empty`.
+
+**Por quê:** o `JpaAuditingHandler` que implementa auditoria é registrado globalmente e tenta validar o metamodel na inicialização — mesmo em contextos sem JPA.
+
+**Como aplicar:** adicionar `@MockBean(JpaMetamodelMappingContext.class)` a cada classe `@WebMvcTest`.
+
+---
+
+### `@WebMvcTest` não ativa `@EnableMethodSecurity` — usar `@Import(MethodSecurityTestConfig.class)`
+
+O slice `@WebMvcTest` não garante que `SecurityConfigurations` (que contém `@EnableMethodSecurity`) seja carregada. Sem isso, `@PreAuthorize` é ignorado e qualquer usuário autenticado consegue acessar endpoints restritos.
+
+**Por quê:** `@WebMvcTest` usa component scan limitado à camada web. A classe de configuração de segurança pode não ser inicializada se suas dependências não estiverem no contexto do slice.
+
+**Como aplicar:** criar `MethodSecurityTestConfig` em `src/test/java/.../config/` com `@TestConfiguration @EnableMethodSecurity` e importar em cada `@WebMvcTest` com `@Import(MethodSecurityTestConfig.class)`.
+
+---
+
+### Requisições mutantes em `@WebMvcTest` precisam de `.with(csrf())`
+
+Com segurança default no `@WebMvcTest`, CSRF está habilitado. Requisições POST/PUT/DELETE sem token CSRF retornam 403, mesmo com usuário autenticado.
+
+**Como aplicar:** adicionar `.with(csrf())` (import de `SecurityMockMvcRequestPostProcessors`) a todas as requisições mutantes nos testes de controller. O token é ignorado se CSRF estiver desabilitado no ambiente de produção — não há risco em adicioná-lo sempre.
+
+---
+
 ### `Especialidade` como entidade (V21)
 
 `Especialidade` foi migrada de enum Java para a entidade `EspecialidadeEntity` + tabela `especialidades`. O cadastro de médico passou a receber `especialidadeId` (Long) em vez do nome do enum.

@@ -30,7 +30,7 @@ docker-compose up -d
 
 ## Migrations applied
 
-V1–V21 (next: V22 for IA integration — Claude API)
+V1–V22 applied (next: V23)
 
 ## Gotchas
 

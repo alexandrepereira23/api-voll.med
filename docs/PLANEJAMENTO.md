@@ -310,3 +310,4 @@ GET /ia/resumo-historico/{paciente_id}
 | `V19` | Criar tabela `auditoria_prontuario` | Aplicado |
 | `V20` | Adicionar colunas de auditoria (`criado_em`, `atualizado_em`) em todas as entidades | Aplicado |
 | `V21` | Criar tabela `especialidades`, migrar FK em `medicos`, remover coluna enum | Aplicado |
+| `V22` | Criar tabela `medico_convenios` (N:N médico ↔ convênio) | Aplicado |

@@ -406,6 +406,18 @@ Authorization: Bearer <token>
 
 ---
 
+### Convênios do Médico
+
+| Método | Endpoint | Acesso | Descrição |
+|--------|----------|--------|-----------|
+| `POST` | `/medicos/{id}/convenios` | `ROLE_ADMIN` / `ROLE_FUNCIONARIO` | Vincula convênio ao médico |
+| `GET` | `/medicos/{id}/convenios` | Autenticado | Lista convênios aceitos pelo médico |
+| `DELETE` | `/medicos/{id}/convenios/{convenioId}` | `ROLE_ADMIN` / `ROLE_FUNCIONARIO` | Remove vínculo |
+
+> Ao agendar uma consulta com `convenioId`, o sistema valida se o médico selecionado aceita o convênio.
+
+---
+
 ### Convênios do Paciente
 
 | Método | Endpoint | Acesso | Descrição |
@@ -497,6 +509,7 @@ POST /ia/gerar-laudo
 | `V19` | Criação da tabela `auditoria_prontuario` |
 | `V20` | Adição de colunas de auditoria (`criado_em`, `atualizado_em`) em todas as entidades principais |
 | `V21` | Criação da tabela `especialidades`, migração da FK em `medicos`, remoção da coluna enum |
+| `V22` | Criação da tabela `medico_convenios` (N:N médico ↔ convênio) |
 
 ---
 

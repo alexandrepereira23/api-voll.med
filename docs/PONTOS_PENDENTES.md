@@ -31,43 +31,43 @@ Registro de itens identificados como incompletos ou não implementados após a c
 
 ---
 
-## ⏳ 2. Validação de convênio no médico — PENDENTE
+## ✅ 2. Validação de convênio no médico — IMPLEMENTADO (V22)
 
-**Problema:** ao agendar uma consulta com convênio, o sistema não valida se o médico aceita aquele convênio. Qualquer médico pode ser associado a qualquer convênio sem restrição.
+**Solução implementada:**
 
-**O que precisa ser feito:**
+| Método | Endpoint | Acesso | Descrição |
+|--------|----------|--------|-----------|
+| `POST` | `/medicos/{id}/convenios` | `ROLE_ADMIN` / `ROLE_FUNCIONARIO` | Vincular convênio ao médico |
+| `GET` | `/medicos/{id}/convenios` | Autenticado | Listar convênios do médico |
+| `DELETE` | `/medicos/{id}/convenios/{convenioId}` | `ROLE_ADMIN` / `ROLE_FUNCIONARIO` | Desvincular convênio |
 
-1. Criar tabela `medico_convenios` (relação N:N entre médico e convênio)
-2. Migration V22: `CREATE TABLE medico_convenios`
-3. Endpoint para vincular convênios ao médico: `POST /medicos/{id}/convenios`
-4. Endpoint para listar convênios do médico: `GET /medicos/{id}/convenios`
-5. Validação em `AgendaDeConsultas.agendar()`: se `convenioId` informado, verificar se o médico aceita o convênio
+**Validação no agendamento:** `AgendaDeConsultas.agendar()` agora rejeita com HTTP 400 se `convenioId` for informado mas o médico selecionado não aceitar o convênio.
 
-**Arquivos a criar/modificar:**
+**Arquivos criados/modificados:**
 - `domain/medico/MedicoConvenio.java` — entidade join
 - `domain/medico/MedicoConvenioRepository.java`
+- `domain/medico/DadosVinculoConvenioMedico.java`
+- `domain/medico/DadosDetalhamentoConvenioMedico.java`
 - `controller/MedicoConvenioController.java`
-- `domain/consulta/AgendaDeConsultas.java` — adicionar validação
-- Migration `V22__create-table-medico-convenios.sql`
+- `domain/consulta/AgendaDeConsultas.java` — nova dependência + validação
+- `V22__create-table-medico-convenios.sql`
 
 ---
 
-## ⏳ 3. Testes automatizados — PENDENTE
+## ✅ 3. Testes automatizados — IMPLEMENTADO
 
-**Problema:** o projeto não possui nenhum teste unitário ou de integração. Qualquer refatoração é feita sem rede de segurança.
+**Estratégia:** testes unitários com JUnit 5 + Mockito (sem contexto Spring); testes de controller com `@WebMvcTest` + serviços mockados; H2 para `@SpringBootTest`.
 
-**O que precisa ser feito:**
+### Testes unitários criados
+- `AgendaDeConsultasTest` — 13 cenários cobrindo todas as validações de agendamento e cancelamento, incluindo a nova regra de convênio (V22)
+- `EspecialidadeServiceTest` — nome duplicado (409), CRUD, inativação
+- `ProntuarioServiceTest` — janela de 24h (422), restrição por médico (403), conflito (409)
+- `IaServiceTest` — mock do `RestClient`, sem prontuários, geração de pré-diagnóstico/laudo/resumo
 
-### Testes unitários (JUnit 5 + Mockito)
-- `AgendaDeConsultasTest` — cobrir todas as validações de agendamento e cancelamento
-- `ProntuarioServiceTest` — validar janela de 24h, restrição por médico
-- `IaServiceTest` — mockar `RestClient`, validar mapeamento de resposta
-- `EspecialidadeServiceTest` — validar conflito de nome duplicado
-
-### Testes de integração (Spring Boot Test + H2)
-- `MedicoControllerTest` — fluxo completo de CRUD com autenticação JWT
-- `ConsultaControllerTest` — agendar, cancelar, retorno
-- `EspecialidadeControllerTest` — CRUD com controle de acesso por role
+### Testes de controller criados (`@WebMvcTest`)
+- `MedicoControllerTest` — CRUD com controle de acesso por role
+- `ConsultaControllerTest` — agendar, cancelar, listar com roles
+- `EspecialidadeControllerTest` — CRUD completo com controle de acesso por role
 
 ### Como rodar
 ```bash

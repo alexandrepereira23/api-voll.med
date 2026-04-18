@@ -5,6 +5,7 @@ import med.voll.api.domain.convenio.ConvenioRepository;
 import med.voll.api.exception.ValidacaoException;
 import med.voll.api.domain.medico.DisponibilidadeMedicoRepository;
 import med.voll.api.domain.medico.Medico;
+import med.voll.api.domain.medico.MedicoConvenioRepository;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.PacienteRepository;
 import org.springframework.stereotype.Service;
@@ -21,17 +22,20 @@ public class AgendaDeConsultas {
     private final PacienteRepository pacienteRepository;
     private final DisponibilidadeMedicoRepository disponibilidadeRepository;
     private final ConvenioRepository convenioRepository;
+    private final MedicoConvenioRepository medicoConvenioRepository;
 
     public AgendaDeConsultas(ConsultaRepository consultaRepository,
                              MedicoRepository medicoRepository,
                              PacienteRepository pacienteRepository,
                              DisponibilidadeMedicoRepository disponibilidadeRepository,
-                             ConvenioRepository convenioRepository) {
+                             ConvenioRepository convenioRepository,
+                             MedicoConvenioRepository medicoConvenioRepository) {
         this.consultaRepository = consultaRepository;
         this.medicoRepository = medicoRepository;
         this.pacienteRepository = pacienteRepository;
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.convenioRepository = convenioRepository;
+        this.medicoConvenioRepository = medicoConvenioRepository;
     }
 
     public DadosDetalhamentoConsulta agendar(DadosAgendamentoConsulta dados) {
@@ -88,6 +92,9 @@ public class AgendaDeConsultas {
                     .orElseThrow(() -> new ValidacaoException("Convênio informado não encontrado."));
             if (!convenio.isAtivo()) {
                 throw new ValidacaoException("Convênio informado está inativo.");
+            }
+            if (!medicoConvenioRepository.existsByMedicoIdAndConvenioIdAndAtivoTrue(medico.getId(), dados.convenioId())) {
+                throw new ValidacaoException("Médico não aceita o convênio informado.");
             }
             consulta.setConvenio(convenio);
         }
