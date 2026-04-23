@@ -97,6 +97,61 @@ Logs para acompanhar:
 - Paciente não pode ter duas consultas no mesmo dia
 - Médico pode ser omitido — sistema escolhe aleatoriamente um disponível na data (sem agenda de disponibilidade real ainda — ver planejamento)
 
+## Frontend
+
+Monorepo — frontend em `frontend/` no mesmo repositório.
+
+### Stack
+
+- React 18 + TypeScript + Vite
+- Tailwind CSS 3
+- React Router DOM 6
+- Axios (client HTTP)
+- React Hook Form + Zod (formulários e validação)
+- Lucide React (ícones)
+
+### Comandos
+
+```bash
+cd frontend
+
+# Instalar dependências
+npm install
+
+# Dev server (http://localhost:5173)
+npm run dev
+
+# Build de produção
+npm run build
+```
+
+### O que está implementado
+
+- Autenticação completa: login, logout, token JWT no `localStorage`, `AuthContext`
+- `PrivateRoute` — redireciona para `/login` se não autenticado
+- Layout com `Sidebar` responsiva
+- Páginas: `Login`, `Dashboard` (placeholder)
+- Axios com interceptor que injeta `Authorization: Bearer <token>` automaticamente
+
+### Estrutura
+
+```
+frontend/src/
+├── api/          # axios.ts (instância), auth.ts (endpoints)
+├── contexts/     # AuthContext.tsx
+├── hooks/        # useAuth.ts
+├── components/
+│   ├── ui/       # Button, Input, Spinner
+│   └── layout/   # Layout, Sidebar, NavItem
+├── pages/        # Login.tsx, Dashboard.tsx
+├── routes/       # AppRouter.tsx, PrivateRoute.tsx
+└── types/        # auth.ts (DTOs)
+```
+
+### CORS
+
+Backend libera `http://localhost:5173` em dev. Para produção, atualizar `SecurityConfigurations`.
+
 ## Planejamento de evolução
 
-Ver `docs/PLANEJAMENTO.md` para o roadmap completo. Todas as funcionalidades planejadas foram implementadas (V1–V22). Próximas evoluções serão definidas após conclusão do frontend.
+Backend completo (V1–V22). Frontend em andamento — próximas páginas: Médicos, Pacientes, Consultas.
