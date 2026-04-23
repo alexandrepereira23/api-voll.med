@@ -87,7 +87,7 @@ Logs para acompanhar:
 
 - `ddl-auto=validate` — Hibernate valida o schema mas não o altera; toda mudança estrutural exige migration Flyway
 - Migrations em `src/main/resources/db/migration/` com prefixo `V{n}__descricao.sql`
-- Próxima migration a criar: `V12`
+- Última migration aplicada: `V22` — próxima será `V23`
 - Exclusão lógica via campo `ativo` em médicos, pacientes e consultas
 
 ### Regras de negócio de consultas (AgendaDeConsultas)
@@ -99,11 +99,4 @@ Logs para acompanhar:
 
 ## Planejamento de evolução
 
-Ver `docs/PLANEJAMENTO.md` para o roadmap completo. Resumo das prioridades:
-
-1. **Prontuário eletrônico** — sem ele o sistema não tem memória clínica
-2. **Agenda de disponibilidade do médico** — o agendamento atual é fictício sem isso
-3. **Prescrição / receita médica**
-4. **Triagem com prioridade**, retorno de consulta, atestado médico
-5. **Convênios / planos de saúde**
-6. **Auditoria LGPD** de acesso a prontuários
+Ver `docs/PLANEJAMENTO.md` para o roadmap completo. Todas as funcionalidades planejadas foram implementadas (V1–V22). Próximas evoluções serão definidas após conclusão do frontend.

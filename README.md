@@ -26,27 +26,37 @@ API REST para gerenciamento de uma clínica médica fictícia chamada **Voll.med
 
 ```
 src/
-└── main/
-    ├── java/med/voll/api/
-    │   ├── ApiApplication.java
-    │   ├── controller/              # Endpoints da API
-    │   ├── domain/                  # Entidades e regras de negócio
-    │   │   ├── atestado/
-    │   │   ├── consulta/
-    │   │   ├── endereco/
-    │   │   ├── medico/              # inclui DisponibilidadeMedico
-    │   │   ├── paciente/
-    │   │   ├── prescricao/
-    │   │   ├── prontuario/
-    │   │   └── usuario/
-    │   ├── exception/               # Exceções de domínio
-    │   ├── infra/
-    │   │   ├── exception/           # Handler global de erros
-    │   │   └── security/            # Filtros JWT e configuração Spring Security
-    │   └── service/                 # Camada de serviços
-    └── resources/
-        ├── application.properties
-        └── db/migration/            # Scripts Flyway (V1 a V13)
+├── main/
+│   ├── java/med/voll/api/
+│   │   ├── ApiApplication.java
+│   │   ├── controller/              # Endpoints da API (14 controllers)
+│   │   ├── domain/                  # Entidades e regras de negócio
+│   │   │   ├── atestado/
+│   │   │   ├── auditoria/           # Auditoria LGPD de prontuários
+│   │   │   ├── consulta/
+│   │   │   ├── convenio/
+│   │   │   ├── endereco/
+│   │   │   ├── ia/                  # DTOs da integração com Claude API
+│   │   │   ├── medico/              # inclui DisponibilidadeMedico, MedicoConvenio
+│   │   │   ├── paciente/            # inclui ConvenioPaciente
+│   │   │   ├── prescricao/
+│   │   │   ├── prontuario/
+│   │   │   └── usuario/
+│   │   ├── exception/               # Exceções de domínio
+│   │   ├── infra/
+│   │   │   ├── aop/                 # Aspecto de auditoria LGPD
+│   │   │   ├── exception/           # Handler global de erros
+│   │   │   └── security/            # Filtros JWT e configuração Spring Security
+│   │   └── service/                 # Camada de serviços
+│   └── resources/
+│       ├── application.properties
+│       └── db/migration/            # Scripts Flyway (V1 a V22)
+└── test/
+    └── java/med/voll/api/
+        ├── config/                  # Configuração de segurança para testes
+        ├── controller/              # Testes de controller (@WebMvcTest)
+        ├── domain/consulta/         # Testes de domínio (AgendaDeConsultas)
+        └── service/                 # Testes de service (unitários)
 ```
 
 ---
@@ -530,6 +540,27 @@ POST /ia/gerar-laudo
 - A exclusão de médicos, pacientes e consultas é **lógica** (soft delete via campo `ativo`).
 - A listagem padrão retorna **10 registros por página**.
 - O `JWT_SECRET` sem valor configurado impede a inicialização da aplicação (falha intencional).
+
+---
+
+## Testes
+
+Suite automatizada com **89 testes**, 0 falhas.
+
+```bash
+# Rodar todos os testes
+./mvnw test
+
+# Rodar uma classe específica
+./mvnw test -Dtest=AgendaDeConsultasTest
+```
+
+| Tipo | Classes | Cobertura |
+|------|---------|-----------|
+| Unitários (`@ExtendWith(MockitoExtension)`) | `AgendaDeConsultasTest`, `EspecialidadeServiceTest`, `ProntuarioServiceTest`, `IaServiceTest` | Regras de negócio e services |
+| Controller (`@WebMvcTest`) | `ConsultaControllerTest`, `MedicoControllerTest`, `PacientesControllerTest`, `ProntuarioControllerTest`, `PrescricaoControllerTest`, `AtestadoControllerTest`, `EspecialidadeControllerTest`, `AutenticacaoControllerTest` | Rotas, roles e status HTTP |
+
+> Ver `docs/TESTES.md` para detalhes da estratégia de testes.
 
 ---
 

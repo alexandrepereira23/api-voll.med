@@ -32,6 +32,14 @@ docker-compose up -d
 
 V1–V22 applied (next: V23)
 
+## Tests
+
+89 tests passing. Run: `./mvnw test`
+
+- Unit: `AgendaDeConsultasTest` (17), `ProntuarioServiceTest` (7), `EspecialidadeServiceTest` (8), `IaServiceTest` (4)
+- Controller (`@WebMvcTest`): `ConsultaControllerTest`, `MedicoControllerTest`, `PacientesControllerTest`, `ProntuarioControllerTest`, `PrescricaoControllerTest`, `AtestadoControllerTest`, `EspecialidadeControllerTest`, `AutenticacaoControllerTest`
+- See `docs/TESTES.md` for full strategy
+
 ## Gotchas
 
 - `.env` file must exist for DB connection (DB_PASSWORD=root)

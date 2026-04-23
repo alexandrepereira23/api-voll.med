@@ -90,6 +90,7 @@ O `DisponibilidadeMedicoController` acessa os repositories diretamente, sem uma 
 | V13 | Disponibilidade de médicos |
 | V14–V20 | Prescrições, triagem, retorno, atestados, convênios, auditoria LGPD, JPA auditing |
 | V21 | Especialidade como tabela (`especialidades`), migração de FK em `medicos` |
+| V22 | Tabela `medico_convenios` (N:N médico ↔ convênio) |
 
 Migrations são imutáveis após aplicadas em qualquer ambiente. Para corrigir uma migration já aplicada, criar uma nova.
 
@@ -166,6 +167,16 @@ O slice `@WebMvcTest` não garante que `SecurityConfigurations` (que contém `@E
 Com segurança default no `@WebMvcTest`, CSRF está habilitado. Requisições POST/PUT/DELETE sem token CSRF retornam 403, mesmo com usuário autenticado.
 
 **Como aplicar:** adicionar `.with(csrf())` (import de `SecurityMockMvcRequestPostProcessors`) a todas as requisições mutantes nos testes de controller. O token é ignorado se CSRF estiver desabilitado no ambiente de produção — não há risco em adicioná-lo sempre.
+
+---
+
+### `@WithMockUser` no teste de login (`AutenticacaoControllerTest`)
+
+O teste `deveRetornarTokenAoFazerLogin` usa `@WithMockUser` mesmo sendo o endpoint de login (público).
+
+**Por quê:** `@WebMvcTest` não carrega `SecurityConfigurations` (que tem `.requestMatchers("/auth/login").permitAll()`). O default do Spring Security bloqueia tudo com HTTP 401. `@WithMockUser` injeta um usuário fake para que a requisição chegue ao controller, onde o mock do `AuthenticationManager` processa a autenticação.
+
+**Impacto:** o teste valida a lógica do controller (chamar authenticate → gerar token → retornar 200), não a regra de segurança do endpoint. Essa separação é intencional — testes de controller testam comportamento, não configuração de segurança.
 
 ---
 
